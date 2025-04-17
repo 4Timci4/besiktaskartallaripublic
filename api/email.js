@@ -29,12 +29,12 @@ const createMainTransporter = () => {
   console.log('Ana e-posta transporter oluşturuluyor...');
   
   return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'mail.kurumsaleposta.com',
+    host: process.env.EMAIL_HOST || 'smtp.example.com',
     port: parseInt(process.env.EMAIL_PORT || '587'),
     secure: process.env.EMAIL_SECURE === 'true',
     auth: {
-      user: process.env.EMAIL_USER || 'info@besiktaskartallari.com', 
-      pass: process.env.EMAIL_PASSWORD || 'K@Rtallar903',
+      user: process.env.EMAIL_USER || 'your-email@example.com', 
+      pass: process.env.EMAIL_PASSWORD || 'your-email-password',
     },
     tls: {
       rejectUnauthorized: false,
@@ -80,7 +80,7 @@ const sendEmail = async (options) => {
       
       // Gönderen e-posta bilgilerini belirle
       const fromName = process.env.EMAIL_FROM_NAME || 'Beşiktaş Kartalları Derneği';
-      const fromEmail = process.env.EMAIL_FROM_ADDRESS || 'info@besiktaskartallari.com';
+      const fromEmail = process.env.EMAIL_FROM_ADDRESS || 'info@example.com';
       const from = `"${fromName}" <${fromEmail}>`;
       
       // E-posta mesajını oluştur ve gönder
@@ -376,4 +376,4 @@ module.exports = async (req, res) => {
       error: String(error)
     });
   }
-}; 
+};
