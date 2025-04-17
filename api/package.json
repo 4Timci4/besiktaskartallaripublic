@@ -1,0 +1,8 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "API functions for besiktaskartallari.com",
+  "type": "commonjs",
+  "dependencies": {
+  }
+} 

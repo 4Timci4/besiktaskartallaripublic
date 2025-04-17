@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Matroska';
+  src: url('./assets/fonts/Matroska-RppG6.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BlackCloudsWhiteSky';
+  src: url('./assets/fonts/Black%20clouds%20white%20sky.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  html {
+    font-family: 'Matroska', system-ui, sans-serif;
+  }
+  
+  h1, .text-h1 {
+    font-family: 'BlackCloudsWhiteSky', system-ui, sans-serif;
+  }
+
+  /* Form alanları için özel stiller */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="number"],
+  select,
+  textarea {
+    @apply min-h-[40px] w-full md:min-w-[300px] px-4 py-2;
+  }
+
+  input[type="email"] {
+    @apply md:min-w-[350px];
+  }
+
+  textarea {
+    @apply md:min-w-[400px] min-h-[100px];
+  }
+
+  /* Responsive ayarlar */
+  @media (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"],
+    input[type="number"],
+    select,
+    textarea {
+      @apply w-[90vw];
+    }
+  }
+
+  /* Form grupları arası boşluk */
+  .form-group + .form-group {
+    @apply mt-5;
+  }
+
+  /* Responsive tipografi ayarları */
+  @media (max-width: 640px) {
+    h1, .text-h1 {
+      font-size: 1.8rem;
+    }
+    h2, .text-h2 {
+      font-size: 1.35rem;
+    }
+    .text-base {
+      font-size: 0.9375rem;
+    }
+    .text-sm {
+      font-size: 0.8125rem;
+    }
+    .text-xs {
+      font-size: 0.6875rem;
+    }
+  }
+}
+
+@layer components {
+  /* Tipografi yardımcı sınıfları */
+  .heading-1 {
+    @apply text-h1 font-bold;
+  }
+
+  .heading-2 {
+    @apply text-h2 font-semibold;
+  }
+
+  .body-text {
+    @apply text-base text-black;
+  }
+
+  .small-text {
+    @apply text-sm text-black;
+  }
+
+  .footnote {
+    @apply text-xs text-black;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 1s ease-out forwards;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

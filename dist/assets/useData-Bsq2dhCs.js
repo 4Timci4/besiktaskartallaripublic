@@ -1,0 +1,1 @@
+import{a as r}from"./vendor-DxT-Uw0Z.js";import{D as o}from"./index-KWbUu1bC.js";const t=()=>{const t=r.useContext(o);if(void 0===t)throw new Error("useData must be used within a DataProvider");return t};export{t as u};
