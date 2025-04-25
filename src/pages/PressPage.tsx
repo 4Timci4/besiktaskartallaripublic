@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { pressApi, Press } from '../utils/supabase';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
-import { FileText, CalendarDays } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import Lightbox from '../components/Lightbox';
 
 const PressPage = () => {

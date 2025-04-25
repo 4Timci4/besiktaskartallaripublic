@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import supabase, { activitiesApi, storageApi } from '../utils/supabase';
 import AdminLayout from '../components/AdminLayout';
 import { Activity } from '../utils/supabase';
-import { Edit, Trash2, Plus, Eye, EyeOff, Image } from 'lucide-react';
+import { Edit, Trash2, Plus, Eye, EyeOff } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -25,48 +25,7 @@ function AdminActivitiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   
-  // Quill editör modülleri
-  const modules = {
-    toolbar: {
-      container: [
-        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        [{ 'color': [] }, { 'background': [] }],
-        [{ 'align': [] }],
-        ['link', 'image'],
-        ['clean']
-      ],
-      handlers: {
-        image: handleImageUpload
-      }
-    }
-  };
-  
-  const formats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'list', 'bullet',
-    'color', 'background',
-    'align',
-    'link', 'image'
-  ];
-  
-  // Quill editöründen resim yükleme işlevi
-  async function handleImageUpload() {
-    const input = document.createElement('input');
-    input.setAttribute('type', 'file');
-    input.setAttribute('accept', 'image/*');
-    
-    input.click();
-    
-    input.onchange = async () => {
-      if (input.files && input.files.length > 0) {
-        const file = input.files[0];
-        await uploadImageToEditor(file);
-      }
-    };
-  }
+  // Quill editor helper functions
   
   // Dosyayı yükleyip editöre ekleyen yardımcı fonksiyon
   const uploadImageToEditor = async (file: File) => {

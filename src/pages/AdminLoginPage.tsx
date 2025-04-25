@@ -1,10 +1,188 @@
-import { FormEvent, useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import supabase from '../utils/supabase';
-import { isAuthenticated, saveLoginTime } from '../utils/auth';
-import { LogIn, AlertCircle, Lock, Mail, Shield, EyeOff, Eye } from 'lucide-react';
+import supabase from '@/utils/supabase';
+import { isAuthenticated, saveLoginTime } from '@/utils/auth';
+import { LogIn, AlertCircle, Lock, Mail, Shield, EyeOff, Eye, Loader2 } from 'lucide-react';
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+// --- Constants ---
+const UI_TEXTS = {
+  pageTitle: "Beşiktaş Kartalları Admin",
+  pageDescription: "Yönetim paneline erişmek için giriş yapın",
+  emailLabel: "E-posta",
+  passwordLabel: "Şifre",
+  rememberMeLabel: "Beni hatırla",
+  forgotPasswordLabel: "Şifremi unuttum",
+  loginButtonLabel: "Giriş Yap",
+  checkingAuthStatus: "Oturum kontrol ediliyor...",
+  loggingInStatus: "Giriş yapılıyor...",
+  errorTitle: "Giriş Hatası",
+  loginFailedPrefix: "Giriş başarısız: ",
+  unknownError: "Bilinmeyen bir hata oluştu.",
+  sessionError: "Oturum bilgisi alınamadı.",
+  footerWarning: "Bu panel sadece yetkili BJK personelinin kullanımı içindir.\nYetkisiz erişim girişimleri kaydedilmektedir.",
+  emailPlaceholder: "email@adresiniz.com",
+  passwordPlaceholder: "••••••••",
+  showPasswordAria: "Şifreyi göster",
+  hidePasswordAria: "Şifreyi gizle",
+};
+
+const BRAND_COLORS = {
+  primary: 'black',
+  secondary: 'white',
+  accent: 'red-600',
+};
+
+// --- Helper Components ---
+
+/**
+ * Renders the loading indicator shown during the initial authentication check.
+ */
+function AuthCheckLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="flex flex-col items-center space-y-3">
+        <Loader2 className={`h-10 w-10 animate-spin text-${BRAND_COLORS.primary}`} />
+        <p className="text-sm text-muted-foreground">{UI_TEXTS.checkingAuthStatus}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Renders the main login form card.
+ */
+function LoginFormCard({
+  email, password, loading, error, showPassword, rememberMe,
+  onEmailChange, onPasswordChange, onRememberMeChange, onTogglePasswordVisibility, onSubmit
+}: {
+  email: string; password: string; loading: boolean; error: string | null; showPassword: boolean; rememberMe: boolean;
+  onEmailChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRememberMeChange: (checked: boolean | 'indeterminate') => void;
+  onTogglePasswordVisibility: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return (
+    <Card className="w-full max-w-md shadow-lg border-t-4 border-black dark:border-gray-700">
+      <CardHeader className="items-center text-center space-y-3 pt-8 pb-6">
+        <Avatar className="h-16 w-16 bg-gray-100 dark:bg-gray-800 border">
+          <AvatarFallback className="bg-transparent">
+            <Shield className={`h-8 w-8 text-${BRAND_COLORS.primary}`} />
+          </AvatarFallback>
+        </Avatar>
+        <CardTitle className="text-2xl font-semibold">{UI_TEXTS.pageTitle}</CardTitle>
+        <CardDescription>{UI_TEXTS.pageDescription}</CardDescription>
+      </CardHeader>
+      <CardContent className="p-6 space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{UI_TEXTS.errorTitle}</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <form className="space-y-4" onSubmit={onSubmit}>
+          {/* Email */}
+          <div className="space-y-1.5">
+            <Label htmlFor="email">{UI_TEXTS.emailLabel}</Label>
+            {/* Reverting to relative container, absolute icon, and pl-12 */}
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
+                id="email"
+                type="email"
+                placeholder={UI_TEXTS.emailPlaceholder}
+                required
+                value={email}
+                onChange={onEmailChange}
+                // Using text-indent instead of padding-left
+                className="" // Removed pl-12
+                style={{ textIndent: '2.25rem' }} // Indent text/placeholder
+                autoComplete="email"
+                disabled={loading}
+              />
+            </div>
+          </div>
+          {/* Password */}
+          <div className="space-y-1.5">
+            <Label htmlFor="password">{UI_TEXTS.passwordLabel}</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder={UI_TEXTS.passwordPlaceholder}
+                required
+                value={password}
+                onChange={onPasswordChange}
+                className="pr-10" // Removed pl-10, kept pr-10 for button
+                style={{ textIndent: '2.25rem' }} // Added text-indent like email field
+                autoComplete="current-password"
+                disabled={loading}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={onTogglePasswordVisibility}
+                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? UI_TEXTS.hidePasswordAria : UI_TEXTS.showPasswordAria}
+                disabled={loading}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          {/* Remember Me & Forgot Password */}
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember-me"
+                checked={rememberMe}
+                onCheckedChange={onRememberMeChange}
+                disabled={loading}
+              />
+              <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground">
+                {UI_TEXTS.rememberMeLabel}
+              </Label>
+            </div>
+            <Button variant="link" type="button" className="h-auto p-0 text-sm text-muted-foreground hover:text-primary" disabled={loading}>
+              {UI_TEXTS.forgotPasswordLabel}
+            </Button>
+          </div>
+          {/* Submit */}
+          <Button type="submit" disabled={loading} className="w-full !mt-6">
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {UI_TEXTS.loggingInStatus}
+              </>
+            ) : (
+              <>
+                <LogIn className="mr-2 h-4 w-4" />
+                {UI_TEXTS.loginButtonLabel}
+              </>
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Admin Login Page Component - Main Entry Point
+ */
 function AdminLoginPage() {
+  // --- State ---
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,233 +192,61 @@ function AdminLoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
-  // Kullanıcı giriş durumunu kontrol et
+  // --- Effects ---
   useEffect(() => {
-    const checkAuth = async () => {
+    let isMounted = true;
+    async function checkAuthStatus() {
       const authenticated = await isAuthenticated();
-      setIsLoggedIn(authenticated);
-    };
-    
-    checkAuth();
+      if (isMounted) setIsLoggedIn(authenticated);
+    }
+    checkAuthStatus();
+    return () => { isMounted = false; };
   }, []);
 
-  // Kullanıcı zaten giriş yapmışsa admin paneline yönlendir
-  if (isLoggedIn === true) {
-    return <Navigate to="/admin" replace />;
-  }
+  // --- Conditional Renders ---
+  if (isLoggedIn === true) return <Navigate to="/admin" replace />;
+  if (isLoggedIn === null) return <AuthCheckLoader />;
 
-  // Henüz kontrol edilmediyse yükleniyor göster
-  if (isLoggedIn === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
-          <p className="mt-4 text-gray-600 text-sm">Oturum kontrol ediliyor...</p>
-        </div>
-      </div>
-    );
-  }
-
-  async function handleLogin(e: FormEvent) {
-    e.preventDefault();
+  // --- Event Handlers ---
+  const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      
-      if (data.session) {
-        // JWT token'ı sakla ve son giriş zamanını kaydet
-        saveLoginTime(data.session.access_token);
-        // Admin paneline yönlendir
-        navigate('/admin');
-      }
-    } catch (err: Error | unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Bilinmeyen hata';
-      setError('Giriş başarısız: ' + errorMessage);
-      console.error('Giriş hatası:', err);
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw signInError;
+      if (!data.session) throw new Error(UI_TEXTS.sessionError);
+      saveLoginTime(data.session.access_token);
+      navigate('/admin');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : UI_TEXTS.unknownError;
+      setError(`${UI_TEXTS.loginFailedPrefix}${message}`);
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
-  }
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
   };
 
+  // --- Render ---
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Arka plan deseni */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMSI+PHBhdGggZD0iTTM2IDM0aDEydjRIMzZ2LTRabTAgOGgxMnY0SDM2di00Wm0wIDhoMTJ2NEgzNnYtNFptLTEyLTI0aDEydjRIMjR2LTRabTAgOGgxMnY0SDI0di00Wm0wIDhoMTJ2NEgyNHYtNFptMCA4aDEydjRIMjR2LTRabS0xMi0yNGgxMnY0SDEydi00Wm0wIDhoMTJ2NEgxMnYtNFptMCA4aDEydjRIMTJ2LTRabTI0LTI0aDEydjRIMzZ2LTRabTAtOGgxMnY0SDM2di00Wm0tMTIgMGgxMnY0SDI0di00Wm0tMTIgMGgxMnY0SDEydi00WiIvPjwvZz48L2c+PC9zdmc+')]"></div>
-      </div>
-      
-      {/* Beşiktaş Renkleri Üst Çizgi */}
-      <div className="fixed top-0 left-0 right-0 flex h-1">
-        <div className="w-1/3 bg-black"></div>
-        <div className="w-1/3 bg-white"></div>
-        <div className="w-1/3 bg-red-600"></div>
-      </div>
-      
-      <div className="w-full max-w-md relative z-10">
-        <div className="bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)]">
-          {/* Logo ve Başlık */}
-          <div className="px-8 py-10 bg-black text-white relative">
-            <div className="flex justify-center">
-              <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center shadow-lg transform transition-transform duration-300 hover:scale-105">
-                <Shield className="h-12 w-12 text-black" />
-              </div>
-            </div>
-            <h2 className="mt-6 text-center text-2xl font-bold">Beşiktaş Kartalları Admin</h2>
-            <p className="mt-2 text-center text-sm text-gray-300">
-              Panel erişiminiz için giriş yapın
-            </p>
-            
-            {/* Dekoratif çizgiler */}
-            <div className="absolute bottom-0 left-0 w-full flex justify-between">
-              <div className="h-1 w-1/3 bg-red-600"></div>
-              <div className="h-1 w-1/3 bg-white"></div>
-              <div className="h-1 w-1/3 bg-black"></div>
-            </div>
-          </div>
-          
-          {/* Form */}
-          <div className="px-8 py-8">
-            {error && (
-              <div className="mb-6 rounded-lg bg-red-50 p-4 border-l-4 border-red-600 animate-fadeIn">
-                <div className="flex items-center">
-                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-red-800">{error}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <form className="space-y-6" onSubmit={handleLogin}>
-              <div className="space-y-2">
-                <label htmlFor="email-address" className="block text-sm font-medium text-gray-700">
-                  E-posta
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-black transition-colors duration-200" />
-                  </div>
-                  <input
-                    id="email-address"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-black focus:border-black text-sm transition-all duration-200 bg-gray-50 focus:bg-white"
-                    placeholder="ornek@bjk.com.tr"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Şifre
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-black transition-colors duration-200" />
-                  </div>
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-black focus:border-black text-sm transition-all duration-200 bg-gray-50 focus:bg-white"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={togglePasswordVisibility}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded transition-colors"
-                  />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                    Beni hatırla
-                  </label>
-                </div>
-                
-                <div className="text-sm">
-                  <button type="button" className="font-medium text-black hover:text-gray-800 transition-colors">
-                    Şifremi unuttum
-                  </button>
-                </div>
-              </div>
-              
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl text-sm font-medium text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  {loading ? (
-                    <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Giriş yapılıyor...
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      <LogIn className="h-4 w-4 mr-2" />
-                      Giriş Yap
-                    </span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-        
-        <div className="mt-6 text-center text-xs text-gray-600 bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-gray-100">
-          <p>
-            Bu panel sadece yetkili BJK personelinin kullanımı içindir.
-            <br />
-            Yetkisiz erişim girişimleri kaydedilmektedir.
-          </p>
-        </div>
-      </div>
-      
-      {/* Beşiktaş Renkleri Alt Çizgi */}
-      <div className="fixed bottom-0 left-0 right-0 flex h-1">
-        <div className="w-1/3 bg-black"></div>
-        <div className="w-1/3 bg-white"></div>
-        <div className="w-1/3 bg-red-600"></div>
-      </div>
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 dark:from-gray-900 dark:via-gray-950 dark:to-black p-4">
+       <LoginFormCard
+         email={email}
+         password={password}
+         loading={loading}
+         error={error}
+         showPassword={showPassword}
+         rememberMe={rememberMe}
+         onEmailChange={(e) => setEmail(e.target.value)}
+         onPasswordChange={(e) => setPassword(e.target.value)}
+         onRememberMeChange={(checked) => setRememberMe(Boolean(checked))}
+         onTogglePasswordVisibility={() => setShowPassword(prev => !prev)}
+         onSubmit={handleLoginSubmit}
+       />
+       {/* Footer Text */}
+       <div className="mt-6 text-center text-xs text-muted-foreground max-w-md w-full whitespace-pre-line">
+         {UI_TEXTS.footerWarning}
+       </div>
     </div>
   );
 }

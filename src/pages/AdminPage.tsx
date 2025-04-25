@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import supabase from '../utils/supabase';
-import { Activity, Image, ArrowRight, Plus, Newspaper, Users, TrendingUp, Calendar, EyeOff, Clock, Mail } from 'lucide-react';
+import { Activity as ActivityIcon, Image, ArrowRight, Plus, Newspaper, Users, TrendingUp, Calendar, EyeOff, Clock, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+// Faaliyet tipi tanımı
+interface Activity {
+  id: string;
+  title: string;
+  image: string;
+  date: string;
+  is_active: boolean;
+  created_at: string;
+  [key: string]: unknown; // Diğer olası alanlar için
+}
 
 function AdminPage() {
   const [stats, setStats] = useState({
@@ -15,7 +26,7 @@ function AdminPage() {
   });
 
   const [loading, setLoading] = useState(true);
-  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
     async function fetchStats() {
@@ -97,7 +108,7 @@ function AdminPage() {
   // Kart renkleri
   const cardStyles = {
     activities: {
-      icon: <Activity className="h-6 w-6 text-white" />,
+      icon: <ActivityIcon className="h-6 w-6 text-white" />,
       bg: "from-blue-500 to-blue-600",
       hover: "hover:from-blue-600 hover:to-blue-700",
       text: "text-blue-600",

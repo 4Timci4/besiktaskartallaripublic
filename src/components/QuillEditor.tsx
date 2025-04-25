@@ -7,10 +7,19 @@ export interface QuillEditorRef {
   getEditor: () => Quill | null;
 }
 
+// Quill modülleri için tip tanımı
+interface QuillModules {
+  toolbar?: {
+    container?: unknown;
+    handlers?: Record<string, (value: unknown) => void>;
+  };
+  [key: string]: unknown;
+}
+
 interface QuillEditorProps {
   value: string;
   onChange: (content: string) => void;
-  modules: any;
+  modules: QuillModules;
   formats: string[];
   placeholder?: string;
   style?: React.CSSProperties;
@@ -58,7 +67,7 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>((props, ref) =>
       quillInstanceRef.current = quill;
       isInitializedRef.current = true;
     }
-  }, []);
+  }, [modules, formats, placeholder, value, onChange]);
 
   // İçerik değiştiğinde Quill içeriğini güncelle
   useEffect(() => {
@@ -71,10 +80,13 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>((props, ref) =>
   useEffect(() => {
     if (quillInstanceRef.current && modules) {
       Object.keys(modules).forEach((key) => {
-        if (key === 'toolbar' && modules.toolbar.handlers) {
+        if (key === 'toolbar' && modules.toolbar?.handlers) {
           // Toolbar işleyicilerini güncelle
           Object.keys(modules.toolbar.handlers).forEach((handlerKey) => {
-            quillInstanceRef.current?.getModule('toolbar').addHandler(handlerKey, modules.toolbar.handlers[handlerKey]);
+            const handler = modules.toolbar?.handlers?.[handlerKey];
+            if (handler) {
+              quillInstanceRef.current?.getModule('toolbar').addHandler(handlerKey, handler);
+            }
           });
         }
       });

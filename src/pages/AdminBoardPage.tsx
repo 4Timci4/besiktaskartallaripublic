@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { boardService } from '../utils/boardService';
 import { Member } from '../types/board';
 import { Plus, Edit, Trash2, User, Users } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { Skeleton, SkeletonText } from '../components/Skeleton';
 
 function AdminBoardPage() {
   // Veri durumları
@@ -265,8 +266,52 @@ function AdminBoardPage() {
         )}
 
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <LoadingSpinner size="lg" />
+          <div className="animate-fadeIn">
+            {/* Başkan Yükleme Animasyonu */}
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <User className="h-6 w-6 text-indigo-600 mr-2" /> Başkan
+              </h2>
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                <Skeleton circle width="128px" height="128px" className="border-4 border-white shadow-lg" />
+                <div className="flex-grow">
+                  <Skeleton height="1.5rem" width="200px" className="mb-2" />
+                  <Skeleton height="1rem" width="150px" className="mb-2" />
+                  <Skeleton height="0.875rem" width="180px" className="mb-3" />
+                  <SkeletonText lines={2} lineHeight="0.875rem" width={["90%", "70%"]} />
+                </div>
+                <div className="flex space-x-2 mt-2 md:mt-0">
+                  <Skeleton width="40px" height="40px" circle />
+                </div>
+              </div>
+            </div>
+
+            {/* Yönetim Kurulu Üyeleri Yükleme Animasyonu */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Users className="h-6 w-6 text-indigo-600 mr-2" /> Yönetim Kurulu Üyeleri
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start gap-3">
+                      <Skeleton circle width="80px" height="80px" className="border-4 border-white shadow-lg" />
+                      <div className="flex-grow">
+                        <Skeleton height="1.125rem" width="120px" className="mb-2" />
+                        <Skeleton height="0.875rem" width="100px" className="mb-1" />
+                        <Skeleton height="0.75rem" width="140px" />
+                      </div>
+                    </div>
+                    <SkeletonText lines={3} lineHeight="0.75rem" className="mt-3" />
+                    <div className="flex justify-end space-x-2 mt-3">
+                      <Skeleton width="28px" height="28px" circle />
+                      <Skeleton width="28px" height="28px" circle />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <>

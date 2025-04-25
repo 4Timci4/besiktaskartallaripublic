@@ -1,6 +1,18 @@
 import * as XLSX from 'xlsx';
 import { MembershipApplication } from './supabase';
 
+// İletişim mesajı tipi tanımı
+interface ContactMessage {
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+  [key: string]: unknown; // Diğer olası alanlar için
+}
+
 /**
  * Üyelik başvurularını Excel dosyasına dönüştürür
  * @param applications Üyelik başvuruları listesi
@@ -77,7 +89,7 @@ export const exportMembershipApplicationsToExcel = (
  * @param fileName Oluşturulacak dosyanın adı (varsayılan: iletisim-mesajlari.xlsx)
  */
 export const exportContactMessagesToExcel = (
-  messages: any[],
+  messages: ContactMessage[],
   fileName: string = 'iletisim-mesajlari.xlsx'
 ): void => {
   // Tarih formatı

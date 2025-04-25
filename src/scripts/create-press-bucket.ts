@@ -3,6 +3,13 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
 
+// Node.js process tipini tanımla
+declare const process: {
+  cwd(): string;
+  env: Record<string, string | undefined>;
+  exit(code?: number): never;
+};
+
 // .env dosyasını yükle
 const envPath = path.resolve(process.cwd(), '.env');
 if (fs.existsSync(envPath)) {
